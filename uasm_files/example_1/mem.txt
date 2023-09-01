@@ -1,0 +1,2 @@
+x : LONG(20)	| label x points to where 20 is stored
+y : LONG(0)		| label y points to where 0 is stored

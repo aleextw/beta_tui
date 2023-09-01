@@ -1,0 +1,49 @@
+ALLOCATE(6)
+
+ADDC(R31, 2, R1) | first argument
+ADDC(R31, 5, R2) | second argument
+ADDC(R31, 3, R3) | third argument
+
+|| Calling Sequence
+|| Push arguments in the reverse order
+PUSH(R3) 
+PUSH(R2)
+PUSH(R1) 
+
+|| Branch to the function
+BEQ(R31, y, LP)
+|| Deallocate the arguments
+DEALLOCATE(3)
+|| Store return value
+ST(R0, result, R31)
+HALT()
+
+||| Callee entry sequence
+y : PUSH(LP)
+PUSH(BP)
+MOVE(SP, BP)
+
+| Preserve old register values before using them
+PUSH(R1)
+PUSH(R2)
+PUSH(R3)
+
+| Load arguments
+LD(BP, -12, R1) | m
+LD(BP, -16, R2) | x
+LD(BP, -20, R3) | c
+
+| Computation
+MUL(R1, R2, R1) 
+ADD(R1, R3, R0) | leave the answer at R0
+
+||| Callee exit sequence
+| Return all register values (POP in reverse order)
+POP(R3)
+POP(R2)
+POP(R1)
+
+MOVE(BP, SP)
+POP(BP)
+POP(LP)
+JMP(LP, R31)

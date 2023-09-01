@@ -1,0 +1,48 @@
+| Allocate space for our global variables in data memory
+ALLOCATE(2)
+
+||| First caller "calling sequence" -- fact(4)
+ADDC(R31, 4, R1) | put 4 to R1 
+PUSH(R1) | step (1) 
+BEQ(R31, fact, LP) | step (2) 
+DEALLOCATE(1) | step (3) 
+ST(R0, result_1, R31) | step (4) 
+
+||| Second caller "calling sequence" -- fact(9)
+ADDC(R31, 9, R1) | put 9 to R1 
+PUSH(R1) | step (1) 
+BEQ(R31, fact, LP) | step (2) 
+DEALLOCATE(1) | step (3) 
+ST(R0, result_2, R31) | step (4) 
+HALT()
+
+||| Callee entry sequence
+fact: PUSH(LP) | step (1) 
+PUSH(BP) | step (2) 
+MOVE(SP, BP) |  step (3) 
+
+| step (4) 
+PUSH(R1) | n
+PUSH(R2) | r
+
+LD(BP, -12, R1) | step (5) 
+ADDC(R31, 1, R2)
+
+||| Computation 
+check_while_fact: CMPLT(R31, R1, R0)
+BNE(R0, while_true_fact, R31)	
+BEQ(R31, done, R31)
+
+while_true_fact: MUL(R1, R2, R2)	
+SUBC(R1, 1, R1)	
+BEQ(R31, check_while_fact, R31)	
+
+||| Callee exit (return) sequence
+done: ADD(R2, R31, R0) | step (1)
+POP(R2) | step (2) 
+POP(R1) 
+
+MOVE(BP, SP) | step (3) 
+POP(BP) | step (4) 
+POP(LP) | step (5) 
+JMP(LP,R31) | step (6) 

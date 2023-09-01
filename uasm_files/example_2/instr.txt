@@ -1,0 +1,9 @@
+ADDC(R31, 12, R0)	| supposed content of x[0]
+ST(R0, x)			| store '12' in R0 at address x
+ADDC(R31, 13, R1)	| supposed content of x[1]
+ADDC(R31, 4, R2) 	| index 1 (x[1] -> x+4)
+ST(R1, x, R2)    	| store '13' in R1 at address (x+4)
+ADD(R0, R1, R3) 	| x[0] + x[1] = 25
+ADDC(R31, 8, R2) 	| index 2 (x[2] -> x+8)
+ST(R3, x, R2) 		| store '25' in R3 at address (x+8)
+HALT()

@@ -1,0 +1,2 @@
+result_1 : LONG(0)
+result_2 : LONG(0)

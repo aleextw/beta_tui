@@ -1,0 +1,53 @@
+ALLOCATE(100)
+
+ADDC(R31, 3, R1)
+PUSH(R1)
+BEQ(R31, fact, LP) | call fact(3) 
+DEALLOCATE(1) 
+HALT()
+
+||| callee entry procedure
+fact: PUSH(LP)
+PUSH(BP)
+MOVE(SP, BP)
+
+| Preserve old register values before using them
+PUSH(R1)	| n
+PUSH(R2)	| temp reg
+PUSH(R3)	| temp reg
+PUSH(R4) 	| for constant
+
+LD(BP, -12, R1) | get first argument
+ADDC(R31, 1, R4) | put 1 to R4 as a constant 
+
+||| Computation Part 1
+begin_fact_check: CMPLT(R4, R1, R2) | compare if 1 < n, store in R2
+BNE(R2, if_true, R31) 
+|| leave 1 in R0
+ADDC(R31, 1, R0) 
+
+||| Callee exit sequence
+exit_sequence: POP(R4) | Pop registers in reverse order, to restore each old register value
+POP(R3)
+POP(R2)
+POP(R1) 
+
+MOVE(BP, SP)
+POP(BP)
+POP(LP)
+JMP(LP, R31)
+
+||| Computation Part 2 
+if_true: SUBC(R1, 1, R3) | compute n-1, store at R3
+
+||| Recursive calling sequence
+PUSH(R3) 
+BEQ(R31, fact, LP) | recurse
+
+|| remove unused argument from stack when recursion returns
+DEALLOCATE(1) 
+
+|| compute n * fact(n-1), store at R0 before returning
+MUL(R0, R1, R0) 
+
+BEQ(R31, exit_sequence, R31) | return

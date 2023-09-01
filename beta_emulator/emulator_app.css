@@ -1,0 +1,55 @@
+Screen {
+    align: center top;
+    padding: 1;
+    width: 1fr;
+    height: 1fr;
+}
+
+TabbedContent {
+    background: $panel;
+    border: round $primary;
+    width: 1fr;
+    height: 1fr;
+}
+
+DataTable {
+    height: 1fr;
+    width: 1fr;
+}
+
+EmulatorWidget {
+    layout: horizontal;
+    height: 1fr;
+}
+
+FileSelectorWidget {
+    height: 1fr;
+}
+
+#file-selector-container {
+    layout: horizontal;
+    padding: 1;
+    height: 1fr;
+}
+
+#file-path-container {
+    layout: horizontal;
+    padding: 1;
+    height: 5;
+}
+
+#load-path {
+    width: 1fr;
+}
+
+Input {
+    width: 11fr;
+}
+
+.label-invalid {
+    outline: red;
+}
+
+LoadingIndicator {
+    height: 1fr;
+}

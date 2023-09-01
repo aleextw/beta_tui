@@ -1,0 +1,12 @@
+ADDC(31, 0, 0) || R0 maintains the data memory address we are currently looking at
+
+move_loop:
+LD(0, 0, 1)   || Load 32-bit value at data memory address we are currently considering to R1
+
+right_shift_loop:
+SHRC(1, 1, 1)
+ST(1, 0, 0)
+BNE(1, right_shift_loop, 31)
+
+ADDC(0, 1, 0)
+BR(move_loop)

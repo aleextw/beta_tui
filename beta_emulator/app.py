@@ -1,9 +1,15 @@
-from rich.text import Text
 import logging
 import datetime
+import math
 
+from rich.segment import Segment
+from rich.style import Style
+from rich.text import Text
+
+from textual import events
 from textual.app import App, ComposeResult
-from textual.reactive import reactive
+from textual.geometry import Offset, Region
+from textual.reactive import reactive, var
 from textual.widget import Widget
 from textual.widgets import (
     Header,
@@ -19,6 +25,7 @@ from textual.widgets import (
 )
 from textual.message import Message
 from textual.containers import Container
+from textual.strip import Strip
 
 from pathlib import Path
 from typing import Union
@@ -33,38 +40,6 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logging.info("Started application")
-
-
-class OutputWidget(Static):
-    output = reactive("")
-
-    def __init__(
-        self, data_memory: Memory = None, width: int = 64, height: int = 32
-    ) -> None:
-        self.data_memory = data_memory
-        self.width = width
-        self.height = height
-
-        self.screen_buffer = [
-            ["" for _ in range(self.width)] for _ in range(self.height)
-        ]
-        super().__init__()
-
-    def update_output(self) -> None:
-        for row in range(self.height):
-            for col in range(self.width):
-                byte_address = row * (
-                    self.width // (self.data_memory.width * 8)
-                ) + col // (self.data_memory.width * 8)
-                selected_byte = self.data_memory.data[byte_address]
-
-                selected_bit = selected_byte[col % (self.data_memory.width * 8)]
-
-                self.screen_buffer[row][col] = (
-                    "[white]█[/white]" if selected_bit else "[black]█[/black]"
-                )
-
-        self.update("\n".join(["".join(row) for row in self.screen_buffer]))
 
 
 class FileSelectorWidget(Widget):
@@ -176,7 +151,7 @@ class EmulatorWidget(Widget):
         (
             "p",
             "toggle_automatic_execution",
-            f"Toggle Automatic Execution (Auto: False)",
+            "Toggle Automatic Execution",
         ),
         ("r", "reset", "Reset"),
         ("t", "toggle_format", "Toggle Data Format"),
@@ -262,7 +237,7 @@ class EmulatorWidget(Widget):
             self.running = False
         else:
             if self.timer is None:
-                self.timer = self.set_interval(0.1, self.action_step_forward)
+                self.timer = self.set_interval(0.01, self.action_step_forward)
             self.timer.resume()
             self.running = True
         self.post_message(self.Updated(self.running + 1))
@@ -359,6 +334,96 @@ class EmulatorWidget(Widget):
         return data.int
 
 
+class Canvas(Widget):
+    """
+    Adapted from https://github.com/thomascrha/textual-game-of-life
+    """
+
+    COMPONENT_CLASSES: set = {
+        "canvas--white-square",
+        "canvas--black-square",
+        "canvas--cursor-square",
+    }
+
+    DEFAULT_CSS: str = """
+    Canvas .canvas--white-square {
+        background: #FFFFFF;
+    }
+    Canvas .canvas--black-square {
+        background: #000000;
+    }
+    Canvas > .canvas--cursor-square {
+        background: darkred;
+    }
+    """
+    ROW_HEIGHT: int = 2
+
+    def __init__(
+        self, data_memory: Memory = None, width: int = 64, height: int = 32
+    ) -> None:
+        super().__init__()
+        self.width = width
+        self.height = height
+        self.data_memory = data_memory
+
+        self.canvas_matrix: "list[list[int]]" = [
+            [0 for _ in range(self.width + 1)] for _ in range(self.height + 1)
+        ]
+
+    def initial_load(self) -> None:
+        for row in range(self.height):
+            for col in range(self.width):
+                self.canvas_matrix[row][col] = self.data_memory.data[
+                    (row * self.width + col) // (8 * self.data_memory.width)
+                ][col % (self.data_memory.width * 8)]
+        self.refresh()
+
+    def update_output(self, debug_frame) -> None:
+        address = debug_frame["data_memory"]["address"]
+        row, col = divmod(8 * address, self.width)
+        col //= self.data_memory.width * 8
+        for idx, cell in enumerate(
+            self.data_memory.data[
+                address >> math.ceil(math.log2(self.data_memory.width))
+            ]
+        ):
+            self.canvas_matrix[row][col * self.data_memory.width * 8 + idx] = cell
+        self.refresh()
+
+    @property
+    def white(self) -> Style:
+        return self.get_component_rich_style("canvas--white-square")
+
+    @property
+    def black(self) -> Style:
+        return self.get_component_rich_style("canvas--black-square")
+
+    def render_line(self, y: int) -> Strip:
+        """Render a line of the widget. y is relative to the top of the widget."""
+        row_index = y // int(self.ROW_HEIGHT / 2)
+
+        if row_index >= self.height:
+            return Strip.blank(self.size.width)
+
+        def get_square_style(column: int, row: int) -> Style:
+            """Get the cursor style at the given position on the checkerboard."""
+            square_style = self.black
+            # only update the squares that aren't out of range
+            if len(self.canvas_matrix) > row and len(self.canvas_matrix[row]) > column:
+                square_style = (
+                    self.black if self.canvas_matrix[row][column] == 1 else self.white
+                )
+
+            return square_style
+
+        segments = [
+            Segment(" " * self.ROW_HEIGHT, get_square_style(column, row_index))
+            for column in range(self.width)
+        ]
+        strip = Strip(segments)
+        return strip
+
+
 class EmulatorApp(App):
     """A Textual app to act as the UI for the Beta Emulator."""
 
@@ -386,7 +451,7 @@ class EmulatorApp(App):
             with TabPane("Emulator", id="emulator"):
                 yield EmulatorWidget()
             with TabPane("Output", id="output"):
-                yield OutputWidget()
+                yield Canvas()
         yield Footer()
 
     def action_show_tab(self, tab: str) -> None:
@@ -397,19 +462,25 @@ class EmulatorApp(App):
     ) -> None:
         tabbed_content = self.query_one(TabbedContent)
         emulator_widget = self.query_one(EmulatorWidget)
-
+        output_widget = self.query_one(Canvas)
         emulator_widget.load_data(event)
         tabbed_content.active = "emulator"
+        output_widget.data_memory = emulator_widget.emulator.data_memory
+        output_widget.initial_load()
 
     def on_emulator_widget_updated(self, event: EmulatorWidget.Updated) -> None:
         if event.update_type == 0:
-            output_widget = self.query_one(OutputWidget)
+            output_widget = self.query_one(Canvas)
 
+            emulator_widget = self.query_one(EmulatorWidget)
             if output_widget.data_memory is None:
-                emulator_widget = self.query_one(EmulatorWidget)
                 output_widget.data_memory = emulator_widget.emulator.data_memory
 
-            output_widget.update_output()
+            if (
+                emulator_widget.emulator.history
+                and "data_memory" in emulator_widget.emulator.history[-1]
+            ):
+                output_widget.update_output(emulator_widget.emulator.history[-1])
         else:
             self.sub_title = "Running" if event.update_type - 1 else "Paused"
 

@@ -8,5 +8,5 @@ SHRC(1, 1, 1)
 ST(1, 0, 0)
 BNE(1, right_shift_loop, 31)
 
-ADDC(0, 1, 0)
+ADDC(0, 4, 0)
 BR(move_loop)

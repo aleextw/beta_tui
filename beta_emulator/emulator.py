@@ -759,12 +759,12 @@ class Emulator:
                 self.append_data_to_result(
                     self.parse_expr(data[match.start() : match.end()].strip())
                 )
+            elif match := self.is_numeric(data):
+                self.append_data_to_result(data[match.start() : match.end()].strip())
             elif match := self.is_variable(data):
                 self.append_data_to_result(
                     self.asm_variables[data[match.start() : match.end()].strip()]
                 )
-            elif match := self.is_numeric(data):
-                self.append_data_to_result(data[match.start() : match.end()].strip())
             else:
                 error_message = f"Failed to parse token: {data[:10]}..."
                 logging.error(error_message)

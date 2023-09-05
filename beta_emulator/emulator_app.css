@@ -26,6 +26,10 @@ FileSelectorWidget {
     height: 1fr;
 }
 
+Canvas {
+    height: 1fr;
+}
+
 #file-selector-container {
     layout: horizontal;
     padding: 1;

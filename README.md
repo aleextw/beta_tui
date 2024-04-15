@@ -38,6 +38,20 @@ Once the virtual environment is activated, install the required packages from th
 pip install -r requirements.txt
 ```
 
+## Running via Docker
+
+1. Build the image from the root of the project with the following command:
+
+```Shell
+docker build -t beta_emulator .
+```
+
+2. Then run and attach to the container:
+
+```Shell
+docker run -it beta_emulator /bin/bash
+```
+
 ## Running the Application
 
 ### Normal Operation

@@ -1,7 +1,11 @@
-FROM python:3.10.14-bookworm
+FROM python:3.10
 
 WORKDIR /usr/src/app
+
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
-COPY * ./
-CMD ["python", "beta_emulator"]
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "beta_emulator", "-e"]

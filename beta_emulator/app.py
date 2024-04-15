@@ -32,6 +32,11 @@ from typing import Union
 
 from emulator import Emulator
 from memory import Memory
+import os
+
+
+if not Path("logs").exists():
+    os.mkdir(Path("logs"))
 
 logging.basicConfig(
     filename=f"logs/{datetime.date.today()}.log",

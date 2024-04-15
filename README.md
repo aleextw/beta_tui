@@ -48,9 +48,19 @@ docker build -t beta_emulator .
 
 2. Then run and attach to the container:
 
+If running on Windows:
+
 ```Shell
-docker run -it beta_emulator /bin/bash
+docker run -it -v "${pwd}:/usr/src/app" beta_emulator /bin/bash
 ```
+
+If running on macOS or Linux:
+
+```Shell
+docker run -it -v "$(pwd):/usr/src/app" beta_emulator /bin/bash
+```
+
+> The `-v` flag is used to mount the current directory as a volume in the Docker container, so that you can retrieve your uasm files once they are assembled.
 
 ## Running the Application
 

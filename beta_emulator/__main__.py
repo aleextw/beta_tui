@@ -1,4 +1,4 @@
-from beta_emulator.app import EmulatorApp
+from app import EmulatorApp
 
 if __name__ == "__main__":
     app = EmulatorApp()

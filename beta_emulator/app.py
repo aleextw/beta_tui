@@ -30,8 +30,8 @@ from textual.strip import Strip
 from pathlib import Path
 from typing import Union
 
-from beta_emulator.emulator import Emulator
-from beta_emulator.memory import Memory
+from emulator import Emulator
+from memory import Memory
 
 logging.basicConfig(
     filename=f"logs/{datetime.date.today()}.log",

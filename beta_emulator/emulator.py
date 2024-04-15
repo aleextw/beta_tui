@@ -12,8 +12,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Optional, Union
 from bitstring import BitArray
-from beta_emulator.memory import Memory
-from beta_emulator.registers import Register
+from memory import Memory
+from registers import Register
 
 func_mapper = defaultdict(dict)
 
@@ -26,9 +26,9 @@ def methoddispatch(func):
         return func_mapper[func.__name__][len(args)](*args, **kwargs)
 
     def register(overload_func):
-        func_mapper[func.__name__][
-            len(inspect.signature(overload_func).parameters)
-        ] = overload_func
+        func_mapper[func.__name__][len(inspect.signature(overload_func).parameters)] = (
+            overload_func
+        )
         return overload_func
 
     func_mapper[func.__name__][len(inspect.signature(func).parameters)] = func

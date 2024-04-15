@@ -45,7 +45,19 @@ pip install -r requirements.txt
 To start the emulator, ensure that you are in your virtual environment, and in the base directory of the project, then enter the command:
 
 ```Shell
-textual run beta_emulator.app:EmulatorApp
+python beta_emulator -e
+```
+
+To instead assemble your code, you can instead use the following flags:
+
+- `-i`: Specify the filepath of your instruction memory
+- `-d`: Specify the filepath of your data memory
+- `-x`: Output data in hex
+
+An example command would be:
+
+```Shell
+python beta_emulator -i uasm_files/factorial_iterative/instr.txt -d uasm_files/factorial_iterative/mem.txt
 ```
 
 ### Development Operation
